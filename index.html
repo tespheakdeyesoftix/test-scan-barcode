@@ -8,45 +8,91 @@
 <body>
 <h1>Barcode Scanner</h1>
 <p>Scan a barcode using your phone's camera:</p>
+<div>
+  <label for="cameraSelect">Select Camera:</label>
+  <select id="cameraSelect"></select>
+</div>
 <div id="barcodeResult"></div>
 <script>
   // Check if Barcode Detection API is supported by the browser
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices || !navigator.mediaDevices.getUserMedia) {
     alert("Your browser doesn't support the Barcode Detection API");
   } else {
-    // Access the user's camera
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-    .then(function(stream) {
-      // Create a video element to stream the camera feed
-      var video = document.createElement('video');
-      video.setAttribute('autoplay', '');
-      video.setAttribute('playsinline', '');
-      video.srcObject = stream;
-      document.body.appendChild(video);
+    // Get the list of available video input devices (cameras)
+    navigator.mediaDevices.enumerateDevices()
+    .then(function(devices) {
+      var cameras = devices.filter(function(device) {
+        return device.kind === 'videoinput';
+      });
 
-      // Load barcode detection model
-      const barcodeScanner = new BarcodeDetector();
+      // Populate the camera select dropdown
+      var cameraSelect = document.getElementById('cameraSelect');
+      cameras.forEach(function(camera, index) {
+        var option = document.createElement('option');
+        option.value = camera.deviceId;
+        option.text = `Camera ${index + 1}`;
+        cameraSelect.appendChild(option);
+      });
 
-      // Continuously detect barcodes
-      setInterval(async () => {
-        try {
-          // Detect barcodes in the video stream
-          const barcodes = await barcodeScanner.detect(video);
-
-          // Display detected barcodes
-          if (barcodes.length > 0) {
-            document.getElementById('barcodeResult').innerHTML = `Detected Barcode: ${barcodes[0].rawValue}`;
-          } else {
-            document.getElementById('barcodeResult').innerHTML = 'No barcode detected';
-          }
-        } catch (error) {
-          console.error('Barcode detection failed:', error);
-        }
-      }, 1000); // Scan for barcodes every second
+      // Access the user's selected camera
+      cameraSelect.addEventListener('change', function(event) {
+        startBarcodeScanner(event.target.value);
+      });
     })
     .catch(function(error) {
-      console.error('Unable to access the camera:', error);
+      console.error('Error enumerating devices:', error);
     });
+
+    // Function to start barcode scanner with the selected camera
+    function startBarcodeScanner(cameraId) {
+      // Access the selected camera
+      navigator.mediaDevices.getUserMedia({ video: { deviceId: cameraId } })
+      .then(function(stream) {
+        // Create a video element to stream the camera feed
+        var video = document.createElement('video');
+        video.setAttribute('autoplay', '');
+        video.setAttribute('playsinline', '');
+        video.srcObject = stream;
+        document.body.appendChild(video);
+
+        // Load barcode detection model
+        const barcodeScanner = new BarcodeDetector();
+
+        // Variable to track if a barcode is already detected
+        var barcodeDetected = false;
+
+        // Continuously detect barcodes
+        setInterval(async () => {
+          try {
+            // If a barcode is already detected, stop scanning
+            if (barcodeDetected) return;
+
+            // Detect barcodes in the video stream
+            const barcodes = await barcodeScanner.detect(video);
+
+            // Display detected barcodes
+            if (barcodes.length > 0) {
+              barcodeDetected = true;
+              document.getElementById('barcodeResult').innerHTML = `Detected Barcode: ${barcodes[0].rawValue}`;
+              // Stop the camera feed
+              stream.getTracks().forEach(track => track.stop());
+              // Alert the detected barcode
+              alert(`Detected Barcode: ${barcodes[0].rawValue}`);
+            } else {
+              document.getElementById('barcodeResult').innerHTML = 'No barcode detected';
+            }
+          } catch (error) {
+            console.error('Barcode detection failed:', error);
+          }
+        }, 1000); // Scan for barcodes every second
+      })
+      .catch(function(error) {
+        console.error('Unable to access the camera:', error);
+      });
+    }
+
+    // Automatically start barcode scanner with the first camera by default
+    startBarcodeScanner(null);
   }
 </script>
 </body>
