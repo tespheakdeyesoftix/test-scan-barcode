@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barcode Scanner</title>
+</head>
+<body>
+<h1>Barcode Scanner</h1>
+<p>Scan a barcode using your phone's camera:</p>
+<div id="barcodeResult"></div>
+<script>
+  // Check if Barcode Detection API is supported by the browser
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert("Your browser doesn't support the Barcode Detection API");
+  } else {
+    // Access the user's camera
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(function(stream) {
+      // Create a video element to stream the camera feed
+      var video = document.createElement('video');
+      video.setAttribute('autoplay', '');
+      video.setAttribute('playsinline', '');
+      video.srcObject = stream;
+      document.body.appendChild(video);
+
+      // Load barcode detection model
+      const barcodeScanner = new BarcodeDetector();
+
+      // Continuously detect barcodes
+      setInterval(async () => {
+        try {
+          // Detect barcodes in the video stream
+          const barcodes = await barcodeScanner.detect(video);
+
+          // Display detected barcodes
+          if (barcodes.length > 0) {
+            document.getElementById('barcodeResult').innerHTML = `Detected Barcode: ${barcodes[0].rawValue}`;
+          } else {
+            document.getElementById('barcodeResult').innerHTML = 'No barcode detected';
+          }
+        } catch (error) {
+          console.error('Barcode detection failed:', error);
+        }
+      }, 1000); // Scan for barcodes every second
+    })
+    .catch(function(error) {
+      console.error('Unable to access the camera:', error);
+    });
+  }
+</script>
+</body>
+</html>
