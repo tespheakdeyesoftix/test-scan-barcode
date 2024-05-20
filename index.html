@@ -11,6 +11,7 @@
 <div>
   <label for="cameraSelect">Select Camera:</label>
   <select id="cameraSelect"></select>
+  <button id="startScanButton">Start Scan</button>
 </div>
 <div id="barcodeResult"></div>
 <script>
@@ -35,18 +36,18 @@
         option.text = `Camera ${index + 1}`;
         cameraSelect.appendChild(option);
       });
-
-      // Access the user's selected camera
-      cameraSelect.addEventListener('change', function(event) {
-        const selectedCameraId = event.target.value;
-        if (activeStream) {
-          stopCamera();
-        }
-        startBarcodeScanner(selectedCameraId);
-      });
     })
     .catch(function(error) {
       console.error('Error enumerating devices:', error);
+    });
+
+    // Start scan barcode button click event
+    document.getElementById('startScanButton').addEventListener('click', function() {
+      const selectedCameraId = document.getElementById('cameraSelect').value;
+      if (activeStream) {
+        stopCamera();
+      }
+      startBarcodeScanner(selectedCameraId);
     });
 
     // Function to start barcode scanner with the selected camera
@@ -107,9 +108,6 @@
         activeStream = null;
       }
     }
-
-    // Automatically start barcode scanner with the first camera by default
-    startBarcodeScanner(null);
   }
 </script>
 </body>
