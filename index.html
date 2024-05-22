@@ -15,17 +15,42 @@
 <select id="cameraSelect"></select>
 <button id="startScan">Start Scan</button>
 <div id="barcodeResult"></div>
-
+  <select id="cameraSelect"></select>
 <script>
-    var constraints = {video: true, audio: false};
-     navigator.mediaDevices.getUserMedia(constraints).then(stream => {
-  
+  function loadDevicesAndPlay(){
+  var constraints = {video: true, audio: false};
+  navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+      localStream = stream;
+      var cameraselect = document.getElementById("cameraSelect");
+      cameraselect.innerHTML="";
       navigator.mediaDevices.enumerateDevices().then(function(devices) {
-          alert(1);
-          alert(JSON.stringify(devices))
+          var count = 0;
+          var cameraDevices = [];
+          var defaultIndex = 0;
+          for (var i=0;i<devices.length;i++){
+              var device = devices[i];
+              if (device.kind == 'videoinput'){
+                  cameraDevices.push(device);
+                  var label = device.label || `Camera ${count++}`;
+                  cameraselect.add(new Option(label,device.deviceId));
+                  if (label.toLowerCase().indexOf("back") != -1) {
+                    defaultIndex = cameraDevices.length - 1;
+                  }
+              }
+          }
+
+          if (cameraDevices.length>0) {
+            cameraselect.selectedIndex = defaultIndex;
+             
+          }else{
+            alert("No camera detected.");
+          }
       });
 
   });
+}
+
+    
 </script>
 </body>
 </html>
