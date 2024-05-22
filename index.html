@@ -5,73 +5,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Barcode Scanner</title>
 <style>
-    #video {
-        width: 100%;
-        height: auto;
+    #barcodeResult {
+        margin-top: 20px;
     }
 </style>
 </head>
 <body>
-    updated 1
-    <select id="cameraList"></select>
-    <button id="startButton">Start Camera</button>
-    <video id="video" playsinline></video>
+<h1>Barcode Scanner</h1>
+<div id="barcodeResult"></div>
 
-    <script>
-        const video = document.getElementById('video');
-        const startButton = document.getElementById('startButton');
-        const cameraList = document.getElementById('cameraList');
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const video = document.createElement('video');
+        const barcodeResult = document.getElementById('barcodeResult');
+        const constraints = { video: { facingMode: 'environment' } };
 
-        startButton.addEventListener('click', startCamera);
+        navigator.mediaDevices.getUserMedia(constraints)
+        .then(function(stream) {
+            video.srcObject = stream;
+            video.setAttribute('playsinline', true);
+            video.play();
+            scanBarcode();
+        })
+        .catch(function(err) {
+            console.error('Error accessing the camera: ', err);
+        });
 
-        async function startCamera() {
-            try {
-                const selectedCameraId = cameraList.value;
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: selectedCameraId } });
-                video.srcObject = stream;
-                video.play();
-                startScan();
-            } catch (err) {
-                console.error('Error accessing camera: ', err);
-            }
-        }
+        function scanBarcode() {
+            const barcodeDetector = new BarcodeDetector();
 
-        async function getCameraList() {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                videoDevices.forEach(device => {
-                    const option = document.createElement('option');
-                    option.value = device.deviceId;
-                    option.text = device.label || `Camera ${cameraList.options.length + 1}`;
-                    cameraList.appendChild(option);
+            barcodeDetector.detect(video)
+            .then(codes => {
+                barcodeResult.innerHTML = '';
+                codes.forEach(code => {
+                    barcodeResult.innerHTML += `<p>Detected barcode: ${code.rawValue}</p>`;
                 });
-            } catch (err) {
-                console.error('Error fetching camera list: ', err);
-            }
+                setTimeout(scanBarcode, 1000); // Scan again after 1 second
+            })
+            .catch(error => {
+                console.error('Barcode detection error: ', error);
+                setTimeout(scanBarcode, 1000); // Try again after 1 second
+            });
         }
-
-        async function startScan() {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            const videoWidth = video.videoWidth;
-            const videoHeight = video.videoHeight;
-            canvas.width = videoWidth;
-            canvas.height = videoHeight;
-
-            const barcodeDetector = new BarcodeDetector({ formats: ['ean_13', 'qr_code'] });
-
-            setInterval(async () => {
-                context.drawImage(video, 0, 0, videoWidth, videoHeight);
-                const imageData = context.getImageData(0, 0, videoWidth, videoHeight);
-                const barcodes = await barcodeDetector.detect(imageData);
-                if (barcodes && barcodes.length > 0) {
-                    alert('Barcode detected: ' + barcodes[0].rawValue);
-                }
-            }, 1000);
-        }
-
-        getCameraList();
-    </script>
+    } else {
+        console.error('Barcode Detection API is not supported.');
+    }
+});
+</script>
 </body>
 </html>
