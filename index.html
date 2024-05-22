@@ -17,6 +17,7 @@
 <div id="barcodeResult"></div>
 
 <script>
+    var constraints = {video: true, audio: false};
      navigator.mediaDevices.getUserMedia(constraints).then(stream => {
   
       navigator.mediaDevices.enumerateDevices().then(function(devices) {
