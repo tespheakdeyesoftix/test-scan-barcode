@@ -12,6 +12,7 @@
 </style>
 </head>
 <body>
+    updated 1
     <select id="cameraList"></select>
     <button id="startButton">Start Camera</button>
     <video id="video" playsinline></video>
@@ -23,24 +24,17 @@
 
         startButton.addEventListener('click', startCamera);
 
-       async function startCamera() {
-    try {
-        const selectedCameraId = cameraList.value;
-        const constraints = {
-            video: {
-                facingMode: { exact: "environment" }, // Try to use rear-facing camera
-                deviceId: selectedCameraId // Optionally, you can also specify the deviceId
+        async function startCamera() {
+            try {
+                const selectedCameraId = cameraList.value;
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: selectedCameraId } });
+                video.srcObject = stream;
+                video.play();
+                startScan();
+            } catch (err) {
+                console.error('Error accessing camera: ', err);
             }
-        };
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = stream;
-        video.play();
-        startScan();
-    } catch (err) {
-        console.error('Error accessing camera: ', err);
-    }
-}
-
+        }
 
         async function getCameraList() {
             try {
