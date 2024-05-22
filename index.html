@@ -17,15 +17,14 @@
 <div id="barcodeResult"></div>
 
 <script>
-     navigator.mediaDevices.enumerateDevices()
-    .then(devices => {
-        alert(123);
-        alert(JSON.stringify( devices));
-    })
-    .catch(error => {
-        console.error('Error enumerating devices: ', error);
-    });
+     navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+  
+      navigator.mediaDevices.enumerateDevices().then(function(devices) {
+          alert(1);
+          alert(JSON.stringify(devices))
+      });
 
+  });
 </script>
 </body>
 </html>
