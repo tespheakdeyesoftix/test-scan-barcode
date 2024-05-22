@@ -40,6 +40,7 @@
 
                 function onScanSuccess(decodedText, decodedResult) {
                     $this.$root.$emit('decodedCode', decodedText, decodedResult);
+                    alert(decodedResult);
                 }
 
                 var html5QrcodeScanner = new Html5QrcodeScanner(
