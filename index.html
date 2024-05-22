@@ -17,74 +17,15 @@
 <div id="barcodeResult"></div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const video = document.createElement('video');
-    const barcodeResult = document.getElementById('barcodeResult');
-    const cameraSelect = document.getElementById('cameraSelect');
-    const startScanButton = document.getElementById('startScan');
-    let selectedDeviceId = null;
-
-    navigator.mediaDevices.enumerateDevices()
+     navigator.mediaDevices.enumerateDevices()
     .then(devices => {
-        devices.forEach(device => {
-            if (device.kind === 'videoinput') {
-                const option = document.createElement('option');
-                option.value = device.deviceId;
-                option.text = device.label || `Camera ${cameraSelect.length + 1}`;
-                cameraSelect.appendChild(option);
-            }
-        });
+        alert(123);
+        console.log(devices);
     })
     .catch(error => {
         console.error('Error enumerating devices: ', error);
     });
 
-    startScanButton.addEventListener('click', function() {
-        selectedDeviceId = cameraSelect.value;
-        startScan();
-    });
-
-    function startScan() {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            const constraints = {
-                video: {
-                    facingMode: 'environment',
-                    deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined
-                }
-            };
-
-            navigator.mediaDevices.getUserMedia(constraints)
-            .then(function(stream) {
-                video.srcObject = stream;
-                video.setAttribute('playsinline', true);
-                video.play();
-                scanBarcode();
-            })
-            .catch(function(err) {
-                console.error('Error accessing the camera: ', err);
-            });
-        } else {
-            console.error('getUserMedia is not supported.');
-        }
-    }
-
-    function scanBarcode() {
-        const barcodeDetector = new BarcodeDetector();
-
-        barcodeDetector.detect(video)
-        .then(codes => {
-            barcodeResult.innerHTML = '';
-            codes.forEach(code => {
-                barcodeResult.innerHTML += `<p>Detected barcode: ${code.rawValue}</p>`;
-            });
-            setTimeout(scanBarcode, 1000); // Scan again after 1 second
-        })
-        .catch(error => {
-            console.error('Barcode detection error: ', error);
-            setTimeout(scanBarcode, 1000); // Try again after 1 second
-        });
-    }
-});
 </script>
 </body>
 </html>
