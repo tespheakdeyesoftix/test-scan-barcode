@@ -1,15 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vite App</title>
-    <script type="module" crossorigin src="assets/index-16w4wX1X.js"></script>
-    <link rel="stylesheet" crossorigin href="assets/index-Bf1Oz7mS.css">
-  </head>
-  <body>
-    <div id="app"></div>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barcode Scanner</title>
+<style>
+    #video {
+        width: 100%;
+        height: auto;
+    }
+</style>
+</head>
+<body>
+    <select id="cameraList"></select>
+    <button id="startButton">Start Camera</button>
+    <video id="video" playsinline></video>
 
-  </body>
+    <script>
+        const video = document.getElementById('video');
+        const startButton = document.getElementById('startButton');
+        const cameraList = document.getElementById('cameraList');
+
+        startButton.addEventListener('click', startCamera);
+
+        async function startCamera() {
+            try {
+                const selectedCameraId = cameraList.value;
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: selectedCameraId } });
+                video.srcObject = stream;
+                video.play();
+                startScan();
+            } catch (err) {
+                console.error('Error accessing camera: ', err);
+            }
+        }
+
+        async function getCameraList() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                videoDevices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.text = device.label || `Camera ${cameraList.options.length + 1}`;
+                    cameraList.appendChild(option);
+                });
+            } catch (err) {
+                console.error('Error fetching camera list: ', err);
+            }
+        }
+
+        async function startScan() {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            canvas.width = videoWidth;
+            canvas.height = videoHeight;
+
+            const barcodeDetector = new BarcodeDetector({ formats: ['ean_13', 'qr_code'] });
+
+            setInterval(async () => {
+                context.drawImage(video, 0, 0, videoWidth, videoHeight);
+                const imageData = context.getImageData(0, 0, videoWidth, videoHeight);
+                const barcodes = await barcodeDetector.detect(imageData);
+                if (barcodes && barcodes.length > 0) {
+                    alert('Barcode detected: ' + barcodes[0].rawValue);
+                }
+            }, 1000);
+        }
+
+        getCameraList();
+    </script>
+</body>
 </html>
